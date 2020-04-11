@@ -3,25 +3,10 @@ file(WRITE ${PROJECT_BINARY_DIR}/simgear/version.h "#define SIMGEAR_VERSION ${SI
 
 foreach( mylibfolder
         bucket
-        bvh
         debug
-        embedded_resources
-        emesary
-        ephemeris
-        io
-        magvar
-        math
         misc
-        nasal
-        nasal/cppbind
-        props
-        serial
-        std
-        structure
         threads
         timing
-        xml
-        package
     )
 
     add_subdirectory(${mylibfolder})
