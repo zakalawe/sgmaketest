@@ -235,33 +235,33 @@ set(HAVE_STD_ISNAN 1)
   
 set(HAVE_WORKING_STD_REGEX 1)
 
-if(CMAKE_COMPILER_IS_GNUCXX)
-    set(WARNING_FLAGS_CXX "-Wall -fPIC")
-    set(WARNING_FLAGS_C   "-Wall -fPIC")
+# if(CMAKE_COMPILER_IS_GNUCXX)
+#     set(WARNING_FLAGS_CXX "-Wall -fPIC")
+#     set(WARNING_FLAGS_C   "-Wall -fPIC")
 
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.4)
-      message(WARNING "GCC 4.4 will be required soon, please upgrade")
-    endif()
+#     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.4)
+#       message(WARNING "GCC 4.4 will be required soon, please upgrade")
+#     endif()
 
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(CMAKE_C_FLAGS
-        "${CMAKE_C_FLAGS} -O0 -fno-omit-frame-pointer -fno-inline")
-      set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -O0 -fno-omit-frame-pointer -fno-inline")
-    elseif (ENABLE_SIMD)
-      if (X86 OR X86_64)
-        set(CMAKE_C_FLAGS_RELEASE "-O3 -msse2 -mfpmath=sse -ftree-vectorize -ftree-slp-vectorize")
-        set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse2 -mfpmath=sse -ftree-vectorize -ftree-slp-vectorize")
-      endif()
-    endif()
+#     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+#       set(CMAKE_C_FLAGS
+#         "${CMAKE_C_FLAGS} -O0 -fno-omit-frame-pointer -fno-inline")
+#       set(CMAKE_CXX_FLAGS
+#         "${CMAKE_CXX_FLAGS} -O0 -fno-omit-frame-pointer -fno-inline")
+#     elseif (ENABLE_SIMD)
+#       if (X86 OR X86_64)
+#         set(CMAKE_C_FLAGS_RELEASE "-O3 -msse2 -mfpmath=sse -ftree-vectorize -ftree-slp-vectorize")
+#         set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse2 -mfpmath=sse -ftree-vectorize -ftree-slp-vectorize")
+#       endif()
+#     endif()
 
-    # certain GCC versions don't provide the atomic builds, and hence
-    # require is to provide them in SGAtomic.cxx
-    set(CMAKE_REQUIRED_INCLUDES ${CMAKE_INCLUDE_PATH})
-    check_cxx_source_compiles(
-       "int main() { unsigned mValue; return __sync_add_and_fetch(&mValue, 1); }"
-        GCC_ATOMIC_BUILTINS_FOUND)
-endif(CMAKE_COMPILER_IS_GNUCXX)
+#     # certain GCC versions don't provide the atomic builds, and hence
+#     # require is to provide them in SGAtomic.cxx
+#     set(CMAKE_REQUIRED_INCLUDES ${CMAKE_INCLUDE_PATH})
+#     check_cxx_source_compiles(
+#        "int main() { unsigned mValue; return __sync_add_and_fetch(&mValue, 1); }"
+#         GCC_ATOMIC_BUILTINS_FOUND)
+# endif(CMAKE_COMPILER_IS_GNUCXX)
 
 if (CLANG)
     # Boost redeclares class members
@@ -299,15 +299,11 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_FLAGS_C} ${MSVC_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS_CXX} ${MSVC_FLAGS} ${BOOST_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MSVC_LD_FLAGS}")
 
-include(CheckCXXFeatures)
+#include(CheckCXXFeatures)
 
 # use BEFORE to ensure local directories are used first,
 # ahead of system-installed libs
 include_directories(BEFORE ${PROJECT_BINARY_DIR}/simgear)
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
-    include_directories("/usr/X11R6/include")
-endif()
 
 add_definitions(-DHAVE_CONFIG_H)
 
@@ -319,55 +315,7 @@ configure_file (
   )
 
 
-if(NOT SIMGEAR_HEADLESS)
-    set(TEST_LIBS SimGearScene ${OPENGL_LIBRARIES} ${TEST_LIBS})
-endif()
-
 install (FILES ${PROJECT_BINARY_DIR}/simgear/simgear_config.h  DESTINATION include/simgear/)
 
 add_subdirectory(3rdparty)
 add_subdirectory(simgear)
-
-#-----------------------------------------------------------------------------
-### Export stuff, see https://cmake.org/cmake/help/v3.2/manual/cmake-packages.7.html#creating-packages
-#-----------------------------------------------------------------------------
-
-generate_export_header(SimGearCore)
-if(NOT SIMGEAR_HEADLESS)
-  generate_export_header(SimGearScene)
-endif()
-
-include(CMakePackageConfigHelpers)
-
-write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/SimGear/SimGearConfigVersion.cmake"
-  VERSION ${SIMGEAR_VERSION}
-  COMPATIBILITY AnyNewerVersion
-)
-
-configure_file(SimGearConfig.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/SimGear/SimGearConfig.cmake"
-  @ONLY
-)
-
-set(ConfigPackageLocation ${CMAKE_INSTALL_LIBDIR}/cmake/SimGear)
-install(EXPORT SimGearTargets
-  DESTINATION ${ConfigPackageLocation}
-)
-install(
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/SimGear/SimGearConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/SimGear/SimGearConfigVersion.cmake"
-  DESTINATION ${ConfigPackageLocation}
-  COMPONENT Devel
-)
-
-#-----------------------------------------------------------------------------
-### uninstall target
-#-----------------------------------------------------------------------------
-CONFIGURE_FILE(
-  "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules/cmake_uninstall.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-  IMMEDIATE @ONLY)
-ADD_CUSTOM_TARGET(uninstall
-  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
