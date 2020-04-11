@@ -115,6 +115,20 @@ find_package(Boost REQUIRED)
 set (BOOST_CXX_FLAGS "-DBOOST_BIMAP_DISABLE_SERIALIZATION")
 include(BoostTestTargets)
 
+find_package(ZLIB 1.2.4 REQUIRED)
+find_package(CURL REQUIRED)
+
+if (SYSTEM_EXPAT)
+    message(STATUS "Requested to use system Expat library, forcing SIMGEAR_SHARED to true")
+    set(SIMGEAR_SHARED ON)
+    find_package(EXPAT REQUIRED)
+
+else()
+    message(STATUS "Using built-in expat code")
+    set(EXPAT_INCLUDE_DIRS
+            ${PROJECT_SOURCE_DIR}/3rdparty/expat
+            ${PROJECT_BINARY_DIR}/3rdparty/expat)
+endif(SYSTEM_EXPAT)
 
 check_include_file(inttypes.h HAVE_INTTYPES_H)
 check_include_file(sys/time.h HAVE_SYS_TIME_H)
@@ -303,4 +317,5 @@ configure_file (
 
 install (FILES ${PROJECT_BINARY_DIR}/simgear/simgear_config.h  DESTINATION include/simgear/)
 
+#add_subdirectory(3rdparty)
 add_subdirectory(simgear)
