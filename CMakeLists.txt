@@ -56,53 +56,8 @@ set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE)
 # use simgear version also as the SO version (if building SOs)
 SET(SIMGEAR_SOVERSION ${SIMGEAR_VERSION})
 
-# Warning when build is not an out-of-source build.
-string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" InSourceBuild)
-if(InSourceBuild)
-    message(WARNING  "Avoid building inside the source tree!")
-    message(WARNING  "Create a separate build directory instead (i.e. 'sgbuild') and call CMake from there: ")
-    message(WARNING  "  mkdir ../sgbuild && cd ../sgbuild && cmake ${CMAKE_SOURCE_DIR}")
-endif(InSourceBuild)
-
-#packaging
-SET(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/COPYING")
-SET(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Simulation support libraries for FlightGear and related projects")
-SET(CPACK_PACKAGE_VENDOR "The FlightGear project")
-SET(CPACK_GENERATOR "TBZ2")
-SET(CPACK_INSTALL_CMAKE_PROJECTS  ${CMAKE_CURRENT_BINARY_DIR};SimGear;ALL;/)
-
-
-# split version string into components, note CMAKE_MATCH_0 is the entire regexp match
-string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" CPACK_PACKAGE_VERSION ${SIMGEAR_VERSION} )
-set(CPACK_PACKAGE_VERSION_MAJOR ${CMAKE_MATCH_1})
-set(CPACK_PACKAGE_VERSION_MINOR ${CMAKE_MATCH_2})
-set(CPACK_PACKAGE_VERSION_PATCH ${CMAKE_MATCH_3})
-
-message(STATUS "version is ${CPACK_PACKAGE_VERSION_MAJOR} dot ${CPACK_PACKAGE_VERSION_MINOR} dot ${CPACK_PACKAGE_VERSION_PATCH}")
-
-set(CPACK_SOURCE_GENERATOR TBZ2)
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "simgear-${SIMGEAR_VERSION}" CACHE INTERNAL "tarball basename")
-set(CPACK_SOURCE_IGNORE_FILES
-  "^${PROJECT_SOURCE_DIR}/.git;\\\\.gitignore;Makefile.am;~$;${CPACK_SOURCE_IGNORE_FILES}")
-
-include (CPack)
-
 # We have some custom .cmake scripts not in the official distribution.
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
-
-# Change the default build type to something fast
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release CACHE STRING
-      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-      FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
-
-# Determine name of library installation directory, i.e. "lib" vs "lib64", which
-# differs between all Debian-based vs all other Linux distros.
-# See cmake bug #11964, http://cmake.org/gitweb?p=cmake.git;a=commit;h=126c993d
-include(GNUInstallDirs)
-message(STATUS "Library installation directory: ${CMAKE_INSTALL_LIBDIR}")
 
 #####################################################################################
 # Configure library search paths
@@ -137,7 +92,6 @@ if (NOT ENABLE_SIMD AND ENABLE_SIMD_CODE)
 endif()
 
 include (DetectArch)
-include (ExportDebugSymbols)
 
 # until the fstream fix is applied and generally available in OSG,
 # keep the compatability link option as the default
@@ -151,8 +105,6 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CLANG)
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++${CMAKE_CXX_STANDARD}")
   endif()
 endif()
-
-
 
 
 if(APPLE)

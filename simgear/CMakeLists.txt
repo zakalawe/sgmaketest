@@ -44,9 +44,6 @@ get_property(localExpatSources GLOBAL PROPERTY LOCAL_EXPAT_SOURCES)
     set_property(TARGET SimGearCore PROPERTY VERSION   ${SIMGEAR_VERSION})
     set_property(TARGET SimGearCore PROPERTY SOVERSION ${SIMGEAR_SOVERSION})
 
-    export_debug_symbols(SimGearCore)
-    export_debug_symbols(SimGearScene)
-
 target_include_directories(SimGearCore BEFORE PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)
