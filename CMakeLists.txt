@@ -29,7 +29,7 @@ endif()
 include (CheckFunctionExists)
 include (CheckIncludeFile)
 include (CheckLibraryExists)
-include (CheckCXXSourceCompiles)
+#include (CheckCXXSourceCompiles)
 include (CheckCXXCompilerFlag)
 include (GenerateExportHeader)
 
@@ -78,7 +78,7 @@ endif()
 option(SIMGEAR_HEADLESS "Set to ON to build SimGear without GUI/graphics support" ON)
 option(ENABLE_RTI       "Set to ON to build SimGear with RTI support" OFF)
 option(ENABLE_GDAL      "Set to ON to build SimGear with GDAL support" OFF)
-option(ENABLE_TESTS     "Set to OFF to disable building SimGear's test applications" ON)
+option(ENABLE_TESTS     "Set to OFF to disable building SimGear's test applications" OFF)
 option(ENABLE_SOUND     "Set to OFF to disable building SimGear's sound support" ON)
 option(USE_AEONWAVE     "Set to ON to use AeonWave instead of OpenAL" ON)
 option(ENABLE_PKGUTIL   "Set to ON to build the sg_pkgutil application (default)" ON)
@@ -153,18 +153,18 @@ if (NOT MSVC)
   endif()
 endif()
 
-if(HAVE_UNISTD_H)
-    set(CMAKE_REQUIRED_INCLUDES ${CMAKE_INCLUDE_PATH})
-    check_cxx_source_compiles(
-       "#include <unistd.h>
-        #if !defined(_POSIX_TIMERS) || (0 >= _POSIX_TIMERS)
-            #error clock_gettime is not supported
-        #endif
+# if(HAVE_UNISTD_H)
+#     set(CMAKE_REQUIRED_INCLUDES ${CMAKE_INCLUDE_PATH})
+#     check_cxx_source_compiles(
+#        "#include <unistd.h>
+#         #if !defined(_POSIX_TIMERS) || (0 >= _POSIX_TIMERS)
+#             #error clock_gettime is not supported
+#         #endif
 
-        int main() { return 0; }
-        "
-        HAVE_CLOCK_GETTIME)
-endif(HAVE_UNISTD_H)
+#         int main() { return 0; }
+#         "
+#         HAVE_CLOCK_GETTIME)
+# endif(HAVE_UNISTD_H)
 
 set(RT_LIBRARY "")
 if(HAVE_CLOCK_GETTIME)
@@ -175,13 +175,13 @@ if(HAVE_CLOCK_GETTIME)
 endif(HAVE_CLOCK_GETTIME)
 
 set(DL_LIBRARY "")
-check_cxx_source_compiles(
-    "#include <dlfcn.h>
-    int main(void) {
-        return 0;
-    }
-    "
-    HAVE_DLFCN_H)
+# check_cxx_source_compiles(
+#     "#include <dlfcn.h>
+#     int main(void) {
+#         return 0;
+#     }
+#     "
+#     HAVE_DLFCN_H)
 
 if(HAVE_DLFCN_H)
     check_library_exists(dl dlerror "" HAVE_DL)
@@ -196,14 +196,16 @@ SET(CMAKE_RELWITHDEBINFO_POSTFIX "" CACHE STRING "add a postfix, usually empty o
 SET(CMAKE_MINSIZEREL_POSTFIX "" CACHE STRING "add a postfix, usually empty on windows")
 
 # isnan might not be real symbol, so can't check using function_exists
-check_cxx_source_compiles(
-    "#include <cmath>
-    int main() { return std::isnan(0.0);} "
-    HAVE_STD_ISNAN)
+# check_cxx_source_compiles(
+#     "#include <cmath>
+#     int main() { return std::isnan(0.0);} "
+#     HAVE_STD_ISNAN)
 
-if (NOT ${HAVE_STD_ISNAN})
-  message(FATAL_ERROR "Your compiler lacks C++11 std::isnan, please update it")
-endif()
+# if (NOT ${HAVE_STD_ISNAN})
+#   message(FATAL_ERROR "Your compiler lacks C++11 std::isnan, please update it")
+# endif()
+
+set(HAVE_STD_ISNAN 1)
 
 # Check if the <regex> implementation in the C++ standard library is usable.
 # This is necessary because g++ 4.8 lies about its C++11 compliance: its
@@ -214,21 +216,24 @@ endif()
 #   [1] https://stackoverflow.com/a/12665408/4756009
 #   [2] https://stackoverflow.com/a/41186162/4756009
 #   [3] https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78905
-check_cxx_source_compiles(
-    "#include <regex>
+# check_cxx_source_compiles(
+#     "#include <regex>
 
-     int main() {
-       #if __cplusplus >= 201103L &&                             \
-           (!defined(__GLIBCXX__)                         ||     \
-            (__cplusplus >= 201402L)                      ||     \
-            defined(_GLIBCXX_REGEX_DFS_QUANTIFIERS_LIMIT) ||     \
-            defined(_GLIBCXX_REGEX_STATE_LIMIT)           ||     \
-            (defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE > 4))
-       #else
-         nullptr = void; // intentionally trigger a compilation error
-       #endif
-     }"
-    HAVE_WORKING_STD_REGEX)
+#      int main() {
+#        #if __cplusplus >= 201103L &&                             \
+#            (!defined(__GLIBCXX__)                         ||     \
+#             (__cplusplus >= 201402L)                      ||     \
+#             defined(_GLIBCXX_REGEX_DFS_QUANTIFIERS_LIMIT) ||     \
+#             defined(_GLIBCXX_REGEX_STATE_LIMIT)           ||     \
+#             (defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE > 4))
+#        #else
+#          nullptr = void; // intentionally trigger a compilation error
+#        #endif
+#      }"
+#     HAVE_WORKING_STD_REGEX)
+
+  
+set(HAVE_WORKING_STD_REGEX 1)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
     set(WARNING_FLAGS_CXX "-Wall -fPIC")

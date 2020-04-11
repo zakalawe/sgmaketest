@@ -23,12 +23,14 @@ set(SOURCES
 
 simgear_component(package package "${SOURCES}" "${HEADERS}")
 
+
+
+if(ENABLE_TESTS)
+
 if(ENABLE_PKGUTIL)
   add_executable(sg_pkgutil pkgutil.cxx)
   target_link_libraries(sg_pkgutil ${TEST_LIBS})
 endif()
-
-if(ENABLE_TESTS)
 
 add_executable(catalog_test CatalogTest.cxx)
 target_link_libraries(catalog_test ${TEST_LIBS})
