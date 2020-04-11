@@ -120,14 +120,14 @@ set(SYSTEM_EXPAT OFF)
 set(SYSTEM_UDNS OFF)
 endif()
 
-option(SIMGEAR_HEADLESS "Set to ON to build SimGear without GUI/graphics support" OFF)
+option(SIMGEAR_HEADLESS "Set to ON to build SimGear without GUI/graphics support" ON)
 option(ENABLE_RTI       "Set to ON to build SimGear with RTI support" OFF)
 option(ENABLE_GDAL      "Set to ON to build SimGear with GDAL support" OFF)
 option(ENABLE_TESTS     "Set to OFF to disable building SimGear's test applications" ON)
 option(ENABLE_SOUND     "Set to OFF to disable building SimGear's sound support" ON)
 option(USE_AEONWAVE     "Set to ON to use AeonWave instead of OpenAL" ON)
 option(ENABLE_PKGUTIL   "Set to ON to build the sg_pkgutil application (default)" ON)
-option(ENABLE_DNS       "Set to ON to use udns library and DNS service resolver" ON)
+option(ENABLE_DNS       "Set to ON to use udns library and DNS service resolver" OFF)
 option(ENABLE_SIMD      "Enable SSE/SSE2 support for compilers" ON)
 option(ENABLE_SIMD_CODE	"Enable SSE/SSE2 support code for compilers" OFF)
 option(ENABLE_OPENMP    "Enable OpenMP compiler support" OFF)
@@ -153,119 +153,15 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CLANG)
 endif()
 
 
-if (MSVC)
-  GET_FILENAME_COMPONENT(PARENT_DIR ${PROJECT_BINARY_DIR} DIRECTORY)
-  if (CMAKE_CL_64)
-    SET(TEST_3RDPARTY_DIR "${PARENT_DIR}/3rdparty.x64")
-  else (CMAKE_CL_64)
-    SET(TEST_3RDPARTY_DIR "${PARENT_DIR}/3rdparty")
-  endif (CMAKE_CL_64)
-  if (EXISTS ${TEST_3RDPARTY_DIR})
-    set(MSVC_3RDPARTY_ROOT ${PARENT_DIR} CACHE PATH "Location where the third-party dependencies are extracted")
-  else (EXISTS ${TEST_3RDPARTY_DIR})
-    set(MSVC_3RDPARTY_ROOT NOT_FOUND CACHE PATH "Location where the third-party dependencies are extracted")
-  endif (EXISTS ${TEST_3RDPARTY_DIR})
-else (MSVC)
-  set(MSVC_3RDPARTY_ROOT NOT_FOUND CACHE PATH "Location where the third-party dependencies are extracted")
-endif (MSVC)
 
-if (MSVC AND MSVC_3RDPARTY_ROOT)
-  message(STATUS "3rdparty files located in ${MSVC_3RDPARTY_ROOT}")
-
-  string(SUBSTRING ${MSVC_VERSION} 0 2 MSVC_VERSION_MAJOR)
-  string(SUBSTRING ${MSVC_VERSION} 2 2 MSVC_VERSION_MINOR)
-
-  set( OSG_MSVC "msvc" )
-  if (${MSVC_VERSION_MAJOR} EQUAL "19")
-    if (${MSVC_VERSION_MINOR} GREATER_EQUAL "20")
-      set( OSG_MSVC ${OSG_MSVC}142 )
-    elseif (${MSVC_VERSION_MINOR} GREATER_EQUAL "10")
-      set( OSG_MSVC ${OSG_MSVC}141 )
-    else ()
-      set( OSG_MSVC ${OSG_MSVC}140 )
-    endif ()
-  elseif (${MSVC_VERSION_MAJOR} EQUAL "18")
-    set( OSG_MSVC ${OSG_MSVC}120 )
-  else ()
-    message(FATAL_ERROR "Visual Studio 2013 or higher is required")
-  endif ()
-
-  if (CMAKE_CL_64)
-      set( OSG_MSVC ${OSG_MSVC}-64 )
-      set( MSVC_3RDPARTY_DIR 3rdParty.x64 )
-  else (CMAKE_CL_64)
-      set( MSVC_3RDPARTY_DIR 3rdParty )
-  endif (CMAKE_CL_64)
-
-  set (CMAKE_LIBRARY_PATH ${MSVC_3RDPARTY_ROOT}/${MSVC_3RDPARTY_DIR}/lib ${MSVC_3RDPARTY_ROOT}/install/${OSG_MSVC}/OpenScenegraph/lib ${MSVC_3RDPARTY_ROOT}/install/${OSG_MSVC}/OpenRTI/lib )
-  set (CMAKE_INCLUDE_PATH ${MSVC_3RDPARTY_ROOT}/${MSVC_3RDPARTY_DIR}/include ${MSVC_3RDPARTY_ROOT}/install/${OSG_MSVC}/OpenScenegraph/include ${MSVC_3RDPARTY_ROOT}/install/${OSG_MSVC}/OpenRTI/include)
-
-  if(NOT BOOST_INCLUDEDIR)
-    # if this variable was not set by the user, set it to 3rdparty root's
-    # parent dir, which is the normal location for people using our
-    # windows-3rd-party repo
-    get_filename_component(MSVC_ROOT_PARENT_DIR ${MSVC_3RDPARTY_ROOT} DIRECTORY)
-    set(BOOST_INCLUDEDIR ${MSVC_ROOT_PARENT_DIR})
-    message(STATUS "BOOST_INCLUDEDIR is ${BOOST_INCLUDEDIR}")
-  endif()
-
-  set (OPENAL_INCLUDE_DIR ${MSVC_3RDPARTY_ROOT}/${MSVC_3RDPARTY_DIR}/include)
-  set (OPENAL_LIBRARY_DIR ${MSVC_3RDPARTY_ROOT}/${MSVC_3RDPARTY_DIR}/lib)
-endif (MSVC AND MSVC_3RDPARTY_ROOT)
 
 if(APPLE)
   find_library(COCOA_LIBRARY Cocoa)
 endif()
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    find_package(Threads REQUIRED)
-endif()
-
 find_package(Boost REQUIRED)
 set (BOOST_CXX_FLAGS "-DBOOST_BIMAP_DISABLE_SERIALIZATION")
 include(BoostTestTargets)
-
-if(SIMGEAR_HEADLESS)
-    message(STATUS "SimGear mode: HEADLESS")
-    set(ENABLE_SOUND 0)
-else()
-    message(STATUS "SimGear mode: NORMAL")
-    find_package(OpenGL REQUIRED)
-
-    if (ENABLE_SOUND)
-        if (USE_AEONWAVE)
-            find_package(AAX)
-        endif()
-
-        if(NOT AAX_FOUND)
-            set(USE_AEONWAVE FALSE)
-            find_package(OpenAL REQUIRED)
-        endif()
-
-        if(AAX_FOUND)
-            message(STATUS "Sound support: AeonWave")
-        else()
-            message(STATUS "Sound support: OpenAL")
-        endif()
-    endif(ENABLE_SOUND)
-
-    find_package(OpenSceneGraph 3.2.0 REQUIRED osgText osgSim osgDB osgParticle osgGA osgViewer osgUtil)
-
-    if (MSVC)
-      set(CMAKE_REQUIRED_INCLUDES ${OPENSCENEGRAPH_INCLUDE_DIRS})
-      # ensure OSG was compiled with OSG_USE_UTF8_FILENAME set
-      check_cxx_source_compiles(
-         "#include <osg/Config>
-         #if !defined(OSG_USE_UTF8_FILENAME)
-          #error OSG UTF8 support not enabled
-         #endif
-         int main() { return 0; }"
-         SIMGEAR_OSG_USE_UTF8_FILENAME)
-      if (NOT SIMGEAR_OSG_USE_UTF8_FILENAME)
-        message(FATAL_ERROR "Please rebuild OSG with OSG_USE_UTF8_FILENAME set to ON")
-      endif()
-    endif()
-endif(SIMGEAR_HEADLESS)
 
 find_package(ZLIB 1.2.4 REQUIRED)
 find_package(CURL REQUIRED)
@@ -291,28 +187,6 @@ if(HAVE_INTTYPES_H)
   # ShivaVG needs inttypes.h
   add_definitions(-DHAVE_INTTYPES_H)
 endif()
-
-if(ENABLE_RTI)
-    find_package(PkgConfig)
-    if(PKG_CONFIG_FOUND)
-      SET(ENV{PKG_CONFIG_PATH} "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkgconfig:$ENV{PKG_CONFIG_PATH}")
-      pkg_check_modules(RTI hla-rti13)
-    endif(PKG_CONFIG_FOUND)
-    if(RTI_FOUND)
-      message(STATUS "RTI: ENABLED")
-    else()
-      message(STATUS "RTI: DISABLED")
-    endif(RTI_FOUND)
-else()
-    message(STATUS "RTI: DISABLED")
-endif(ENABLE_RTI)
-
-if(ENABLE_GDAL)
-    find_package(GDAL 2.0.0 REQUIRED)
-    if (GDAL_FOUND)
-        include_directories(${GDAL_INCLUDE_DIR})
-    endif(GDAL_FOUND)
-endif(ENABLE_GDAL)
 
 check_function_exists(gettimeofday HAVE_GETTIMEOFDAY)
 check_function_exists(rint HAVE_RINT)
@@ -453,18 +327,6 @@ if (CLANG)
     endif()
 endif()
 
-if (ENABLE_OPENMP)
-    find_package(OpenMP)
-    if(OPENMP_FOUND)
-        message(STATUS "OpenMP: ENABLED")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    else()
-        message(STATUS "OpenMP: NOT FOUND")
-    endif()
-else()
-    message(STATUS "OpenMP: DISABLED")
-endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 # boost goes haywire wrt static asserts
@@ -474,44 +336,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     endif()
 endif()
 
-if(WIN32)
 
-    if(MINGW)
-        add_definitions(-D_WIN32_WINNT=0x501)
-    endif()
-
-    if(MSVC)
-        set(MSVC_FLAGS "-DWIN32 -DNOMINMAX -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNINGS -D__CRT_NONSTDC_NO_WARNINGS /MP")
-        if(ENABLE_SIMD)
-          if (X86)
-            SET(CMAKE_C_FLAGS_RELEASE "/O2 /arch:SSE /arch:SSE2")
-            SET(CMAKE_CXX_FLAGS_RELEASE "/O2 /arch:SSE /arch:SSE2")
-          else()
-            SET(CMAKE_C_FLAGS_RELEASE "/O2")
-            SET(CMAKE_CXX_FLAGS_RELEASE "/O2")
-          endif()
-        endif()
-
-        if (NOT OSG_FSTREAM_EXPORT_FIXED)
-          message(STATUS "For better linking performance, use OSG with patched fstream header")
-          # needed to avoid link errors on multiply-defined standard C++
-          # symbols. Suspect this may be an OSG-DB export bug
-            set( MSVC_LD_FLAGS "/FORCE:MULTIPLE" )
-        endif ()
-
-        if (${MSVC_VERSION} GREATER 1899)
-            # needed for debug builds with VS2015
-            set( MSVC_FLAGS "${MSVC_FLAGS} /bigobj" )
-        endif()
-    endif(MSVC)
-
-    # assumed on Windows
-    set(HAVE_GETLOCALTIME 1)
-
-    set( WINSOCK_LIBRARY "ws2_32.lib" )
-    set( SHLWAPI_LIBRARY "Shlwapi.lib" )
-    set( RT_LIBRARY "winmm" )
-endif(WIN32)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_FLAGS_C} ${MSVC_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS_CXX} ${MSVC_FLAGS} ${BOOST_CXX_FLAGS}")
@@ -536,48 +361,12 @@ configure_file (
   "${PROJECT_BINARY_DIR}/simgear/simgear_config.h"
   )
 
-if(ENABLE_TESTS)
-    # enable CTest / make test target
-    message(STATUS "Tests: ENABLED")
-
-    include (Dart)
-    enable_testing()
-else()
-    message(STATUS "Tests: DISABLED")
-endif(ENABLE_TESTS)
-
-# always set TEST_LIBS as it is also used by other tools/applications
-set(TEST_LIBS_INTERNAL_CORE
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${ZLIB_LIBRARY}
-    ${WINSOCK_LIBRARY}
-    ${SHLWAPI_LIBRARY}
-    ${RT_LIBRARY}
-    ${DL_LIBRARY}
-    ${COCOA_LIBRARY}
-    ${CURL_LIBRARIES}
-    ${GDAL_LIBRARY})
-set(TEST_LIBS SimGearCore ${TEST_LIBS_INTERNAL_CORE})
 
 if(NOT SIMGEAR_HEADLESS)
     set(TEST_LIBS SimGearScene ${OPENGL_LIBRARIES} ${TEST_LIBS})
 endif()
 
 install (FILES ${PROJECT_BINARY_DIR}/simgear/simgear_config.h  DESTINATION include/simgear/)
-
-if(ENABLE_DNS)
-    if(SYSTEM_UDNS)
-        message(STATUS "Requested to use system udns library, forcing SIMGEAR_SHARED to true")
-        set(SIMGEAR_SHARED ON)
-        find_package(Udns REQUIRED)
-    else()
-        message(STATUS "DNS resolver: ENABLED")
-        include_directories(3rdparty/udns)
-    endif()
-else()
-    message(STATUS "DNS resolver: DISABLED")
-endif()
-
 
 add_subdirectory(3rdparty)
 add_subdirectory(simgear)
